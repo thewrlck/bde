@@ -1,0 +1,24 @@
+services:
+  ordinals:
+    build:
+      context: .
+      dockerfile: Dockerfile.ordinals
+    container_name: ordinals
+    volumes:
+      - ./ordinals:/root/.local/share/ord
+    ports:
+      - ${ORDINALS_PORT}:80
+    command:
+      [
+        "./ord",
+        "--bitcoin-rpc-url", "http://bitcoin:${RPC_PORT}",
+        "--bitcoin-rpc-username", "${RPC_USER}",
+        "--bitcoin-rpc-password", "${RPC_PASS}",
+        "--data-dir", "/root/.local/share/ord",
+        "--index-addresses",
+        "--index-cache-size", "1000000000",
+        "--index-runes",
+        "--index-sats",
+        "--index-transactions",
+         "server",
+      ]

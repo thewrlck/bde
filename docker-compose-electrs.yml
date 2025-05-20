@@ -1,0 +1,22 @@
+services:
+  electrs:
+    build:
+      context: .
+      dockerfile: Dockerfile.electrs
+    container_name: electrs
+    volumes:
+      - ./electrs:/root/.electrs
+      - ./bitcoin:/root/.bitcoin
+    ports:
+      - ${ELECTRS_PORT}:50001
+    command:
+      [
+        "./electrs",
+        "--daemon-rpc-addr", "bitcoin:${RPC_PORT}",
+        "--electrum-rpc-addr", "0.0.0.0:50001",
+        "--db-dir", "/root/.electrs/db",
+        "--cookie", "/root/.bitcoin/.cookie",
+        "--jsonrpc-import",
+        "--utxos-limit", "1000",
+        "-vvvv"
+      ]

@@ -1,0 +1,7 @@
+server=1
+listen=1
+txindex=1
+dbcache=3000
+rpcauth=user:cd813edd9d4e5df6bb02eba7de27d2c7$6a4af3f1d15935092d2f07a8f1b5a6ed3df4122ee97a667ab780969fe104f670
+rpcbind=0.0.0.0
+rpcallowip=0.0.0.0/0

@@ -1,0 +1,10 @@
+bitcoin_rpc_url: http://bitcoin:8332
+bitcoin_rpc_username: user
+bitcoin_rpc_password: pass
+data_dir: /root/.local/share/ord
+index_addresses: true
+index_cache_size: 1000000000
+index_runes: true
+index_sats: true
+index_transactions: true
+server_url: http://0.0.0.0:8888

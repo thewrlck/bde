@@ -1,0 +1,8 @@
+.DS_Store
+.env
+bitcoin/*
+!bitcoin/.gitkeep
+electrs/*
+!electrs/.gitkeep
+ordinals/*
+!ordinals/.gitkeep

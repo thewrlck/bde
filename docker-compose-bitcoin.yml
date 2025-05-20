@@ -1,0 +1,23 @@
+services:
+  bitcoin:
+    build:
+      context: .
+      dockerfile: Dockerfile.bitcoin
+    container_name: bitcoin
+    volumes:
+      - ./bitcoin:/root/.bitcoin
+    ports:
+      - ${RPC_PORT}:8332
+      - ${P2P_PORT}:8333
+    command:
+      [
+        "./bitcoind",
+        "-printtoconsole",
+        "-server=1",
+        "-listen=1",
+        "-txindex=1",
+        "-dbcache=3000",
+        "-rpcbind=0.0.0.0",
+        "-rpcallowip=0.0.0.0/0",
+        "-rpcauth=${RPC_AUTH}",
+      ]

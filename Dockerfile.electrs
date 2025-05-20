@@ -1,0 +1,25 @@
+FROM rust:1.87.0-bookworm as builder
+
+RUN apt update
+RUN apt install -y git clang cmake
+
+WORKDIR /root
+
+RUN git clone https://github.com/mempool/electrs.git
+
+WORKDIR /root/electrs
+
+RUN git checkout v3.2.0
+
+RUN cargo build --release
+
+FROM debian:12.10-slim
+
+RUN apt update && apt install -y libssl-dev
+
+WORKDIR /root/electrs
+
+COPY --from=builder /root/electrs/target/release/electrs .
+
+ENV RUST_BACKTRACE=1
+ENV RUST_LOG=debug
