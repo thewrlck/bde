@@ -110,16 +110,16 @@ Each service can be started independently:
 
 ```bash
 # Start Bitcoin Node
-docker-compose -f docker-compose-bitcoin.yml up -d
+docker compose -f docker-compose-bitcoin.yml up -d
 
 # Start Electrum Server
-docker-compose -f docker-compose-electrs.yml up -d
+docker compose -f docker-compose-electrs.yml up -d
 
 # Start Ordinals Server
-docker-compose -f docker-compose-ordinals.yml up -d
+docker compose -f docker-compose-ordinals.yml up -d
 
 # Start a new service
-docker-compose -f docker-compose-<service-name>.yml up -d
+docker compose -f docker-compose-<service-name>.yml up -d
 ```
 
 ## Ports
