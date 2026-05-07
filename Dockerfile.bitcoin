@@ -1,17 +1,26 @@
-FROM debian:12.10-slim
+FROM debian:bookworm-slim
 
-RUN apt update
-RUN apt install -y git build-essential cmake pkgconf python3 libevent-dev libboost-dev libsqlite3-dev libzmq3-dev systemtap-sdt-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates git build-essential cmake pkgconf python3 \
+        libevent-dev libboost-dev \
+        libzmq3-dev \
+        libcapnp-dev capnproto \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root
+RUN useradd --create-home --uid 1000 bitcoin
+USER bitcoin
+WORKDIR /home/bitcoin
 
-RUN git clone https://github.com/bitcoin/bitcoin.git
+RUN git clone --depth 1 --branch v31.0 https://github.com/bitcoin/bitcoin.git
+WORKDIR /home/bitcoin/bitcoin
 
-WORKDIR /root/bitcoin
+RUN cmake -B build \
+        -DENABLE_WALLET=OFF \
+        -DWITH_ZMQ=ON \
+        -DENABLE_IPC=ON \
+        -DWITH_USDT=OFF \
+        -DBUILD_TESTS=OFF \
+        -DBUILD_BENCH=OFF \
+ && cmake --build build -j"$(nproc)"
 
-RUN git checkout v29.0
-
-RUN cmake -B build
-RUN cmake --build build
-
-WORKDIR /root/bitcoin/build/bin
+WORKDIR /home/bitcoin/bitcoin/build/bin

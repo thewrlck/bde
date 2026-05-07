@@ -5,10 +5,13 @@ services:
       dockerfile: Dockerfile.bitcoin
     container_name: bitcoin
     volumes:
-      - ./bitcoin:/root/.bitcoin
+      - ./bitcoin:/home/bitcoin/.bitcoin
     ports:
       - ${RPC_PORT}:8332
       - ${P2P_PORT}:8333
+      - ${ZMQ_RAWBLOCK_PORT}:28332
+      - ${ZMQ_RAWTX_PORT}:28333
+      - ${ZMQ_HASHBLOCK_PORT}:28334
     command:
       [
         "./bitcoind",
@@ -20,4 +23,7 @@ services:
         "-rpcbind=0.0.0.0",
         "-rpcallowip=0.0.0.0/0",
         "-rpcauth=${RPC_AUTH}",
+        "-zmqpubrawblock=tcp://0.0.0.0:28332",
+        "-zmqpubrawtx=tcp://0.0.0.0:28333",
+        "-zmqpubhashblock=tcp://0.0.0.0:28334",
       ]

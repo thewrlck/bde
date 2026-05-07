@@ -14,8 +14,10 @@ The environment follows a modular architecture where each service is:
 
 The environment currently includes:
 
-1. **Bitcoin Core Node** (v29.0)
+1. **Bitcoin Core Node** (v31.0)
    - Full Bitcoin node with RPC and P2P ports exposed
+   - ZMQ publishers for rawblock, rawtx, and hashblock
+   - Built without wallet support; IPC enabled
    - Includes transaction indexing and server mode enabled
    - Configurable RPC authentication
 
@@ -76,6 +78,9 @@ Create a `.env` file in the root directory, copying `.env.example` with the foll
 # Bitcoin Core
 RPC_PORT=8332
 P2P_PORT=8333
+ZMQ_RAWBLOCK_PORT=28332
+ZMQ_RAWTX_PORT=28333
+ZMQ_HASHBLOCK_PORT=28334
 RPC_AUTH=<your_rpc_auth_string>
 RPC_USER=<your_rpc_username>
 RPC_PASS=<your_rpc_password>
@@ -127,6 +132,9 @@ docker compose -f docker-compose-<service-name>.yml up -d
 Each service exposes its own ports:
 - Bitcoin Core RPC: 8332
 - Bitcoin Core P2P: 8333
+- Bitcoin Core ZMQ rawblock: 28332
+- Bitcoin Core ZMQ rawtx: 28333
+- Bitcoin Core ZMQ hashblock: 28334
 - Electrum Server: 50001
 - Ordinals Server: 80
 - New Service: <port>
