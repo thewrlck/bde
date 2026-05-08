@@ -5,18 +5,18 @@ services:
       dockerfile: Dockerfile.electrs
     container_name: electrs
     volumes:
-      - ./electrs:/root/.electrs
-      - ./bitcoin:/root/.bitcoin
+      - ./electrs:/home/electrs/.electrs
     ports:
       - ${ELECTRS_PORT}:50001
     command:
       [
         "./electrs",
-        "--daemon-rpc-addr", "bitcoin:${RPC_PORT}",
+        "--daemon-rpc-addr", "${BITCOIN_RPC_URL}",
         "--electrum-rpc-addr", "0.0.0.0:50001",
-        "--db-dir", "/root/.electrs/db",
-        "--cookie", "/root/.bitcoin/.cookie",
+        "--db-dir", "/home/electrs/.electrs/db",
+        "--cookie", "${RPC_USER}:${RPC_PASS}",
+        "--lightmode",
         "--jsonrpc-import",
-        "--utxos-limit", "1000",
+        "--utxos-limit", "1000000",
         "-vvvv"
       ]

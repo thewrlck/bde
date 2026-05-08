@@ -1,25 +1,28 @@
-FROM rust:1.87.0-bookworm as builder
+FROM rust:1.87.0-bookworm AS builder
 
-RUN apt update
-RUN apt install -y git clang cmake
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git clang cmake \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
 
-RUN git clone https://github.com/mempool/electrs.git
+RUN git clone --depth 1 --branch v3.3.0 https://github.com/mempool/electrs.git
 
 WORKDIR /root/electrs
-
-RUN git checkout v3.2.0
 
 RUN cargo build --release
 
-FROM debian:12.10-slim
+FROM debian:bookworm-slim
 
-RUN apt update && apt install -y libssl-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates libssl3 \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /root/electrs
+RUN useradd --create-home --uid 1000 electrs
+USER electrs
+WORKDIR /home/electrs
 
-COPY --from=builder /root/electrs/target/release/electrs .
+COPY --chown=electrs:electrs --from=builder /root/electrs/target/release/electrs ./electrs
 
 ENV RUST_BACKTRACE=1
 ENV RUST_LOG=debug

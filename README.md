@@ -21,10 +21,10 @@ The environment currently includes:
    - Includes transaction indexing and server mode enabled
    - Configurable RPC authentication
 
-2. **Electrum Server** (v3.2.0)
-   - Built on top of electrs
+2. **Electrum Server** (v3.3.0)
+   - Built on top of mempool/electrs (lightmode)
    - Provides Electrum protocol support
-   - Connects to the Bitcoin node for blockchain data
+   - Connects to a remote Bitcoin node via `BITCOIN_RPC_URL`, authenticating with `RPC_USER`/`RPC_PASS`
 
 3. **Ordinals Server** (v0.23.1)
    - Built on top of ord
@@ -87,6 +87,7 @@ RPC_PASS=<your_rpc_password>
 
 # Electrum Server
 ELECTRS_PORT=50001
+BITCOIN_RPC_URL=<host:port of remote bitcoin node, e.g. node.example.com:8332>
 
 # Ordinals Server
 ORDINALS_PORT=80
