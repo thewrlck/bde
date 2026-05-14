@@ -25,7 +25,7 @@ services:
         "-rpcauth=${RPC_AUTH}",
         "-rpcworkqueue=1024",
         "-rpcthreads=16",
-        "-rpctimeout=900",
+        "-rpcservertimeout=900",
         "-zmqpubrawblock=tcp://0.0.0.0:28332",
         "-zmqpubrawtx=tcp://0.0.0.0:28333",
         "-zmqpubhashblock=tcp://0.0.0.0:28334",
