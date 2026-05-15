@@ -1,0 +1,43 @@
+FROM rust:1.84-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl git build-essential python3 pkg-config \
+ && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+RUN git clone --depth 1 --branch v3.3.1 https://github.com/mempool/mempool.git .
+
+RUN cp -r ./docker/backend/. ./backend/ \
+ && mkdir -p ./backend/GeoIP
+
+WORKDIR /src/backend
+
+ENV FD=/src/backend/rust-gbt
+RUN npm install --omit=dev --omit=optional
+RUN npm run package
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates curl \
+ && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+ && apt-get install -y --no-install-recommends nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --uid 1000 mempool
+WORKDIR /backend
+RUN chown 1000:1000 /backend
+
+COPY --from=builder --chown=1000:1000 /src/backend/package ./package/
+COPY --from=builder --chown=1000:1000 /src/backend/GeoIP ./GeoIP/
+COPY --from=builder --chown=1000:1000 /src/backend/mempool-config.json ./mempool-config.json
+COPY --from=builder --chown=1000:1000 /src/backend/start.sh ./start.sh
+COPY --from=builder --chown=1000:1000 /src/backend/wait-for-it.sh ./wait-for-it.sh
+RUN chmod +x /backend/start.sh /backend/wait-for-it.sh
+
+USER 1000
+EXPOSE 8999
+CMD ["/backend/start.sh"]

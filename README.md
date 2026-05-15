@@ -31,6 +31,12 @@ The environment currently includes:
    - Provides Ordinals protocol support
    - Includes indexing for addresses, runes, sats, and transactions
 
+4. **Mempool** (v3.3.1)
+   - Block explorer and mempool visualizer from https://github.com/mempool/mempool
+   - Built from source: API (Node.js + Rust GBT), web frontend (Angular + nginx), MariaDB
+   - Configured with `MEMPOOL_BACKEND=esplora`, pointing at the existing electrs container's HTTP REST API (enabled via `--http-addr` on port 3000)
+   - Connects to Bitcoin Core RPC for `CORE_RPC_*` queries
+
 ## Adding New Services
 
 To add a new service to this environment:
@@ -87,10 +93,19 @@ RPC_PASS=<your_rpc_password>
 
 # Electrum Server
 ELECTRS_PORT=50001
+ESPLORA_PORT=3000
 BITCOIN_RPC_URL=<host:port of remote bitcoin node, e.g. node.example.com:8332>
 
 # Ordinals Server
 ORDINALS_PORT=80
+
+# Mempool
+ESPLORA_REST_API_URL=http://host.docker.internal:3000
+CORE_RPC_HOST=host.docker.internal
+CORE_RPC_PORT=8332
+MEMPOOL_WEB_PORT=8081
+MEMPOOL_DB_PASSWORD=<mempool db user password>
+MEMPOOL_DB_ROOT_PASSWORD=<mempool db root password>
 
 # Add new service variables here
 ```
@@ -99,15 +114,19 @@ ORDINALS_PORT=80
 
 ```
 .
-├── bitcoin/             # Bitcoin Core data directory
-├── electrs/             # Electrum server data directory
-├── ordinals/            # Ordinals server data directory
-├── Dockerfile.bitcoin   # Bitcoin Core Dockerfile
-├── Dockerfile.electrs   # Electrum server Dockerfile
-├── Dockerfile.ordinals  # Ordinals server Dockerfile
+├── bitcoin/                       # Bitcoin Core data directory
+├── electrs/                       # Electrum server data directory
+├── ordinals/                      # Ordinals server data directory
+├── mempool/                       # Mempool data (cache + mariadb)
+├── Dockerfile.bitcoin             # Bitcoin Core Dockerfile
+├── Dockerfile.electrs             # Electrum server Dockerfile
+├── Dockerfile.ordinals            # Ordinals server Dockerfile
+├── Dockerfile.mempool-backend     # Mempool API Dockerfile
+├── Dockerfile.mempool-frontend    # Mempool web Dockerfile
 ├── docker-compose-bitcoin.yml
 ├── docker-compose-electrs.yml
-└── docker-compose-ordinals.yml
+├── docker-compose-ordinals.yml
+└── docker-compose-mempool.yml
 ```
 
 ## Usage
@@ -124,6 +143,9 @@ docker compose -f docker-compose-electrs.yml up -d
 # Start Ordinals Server
 docker compose -f docker-compose-ordinals.yml up -d
 
+# Start Mempool (electrs must be running with --http-addr enabled)
+docker compose -f docker-compose-mempool.yml up -d
+
 # Start a new service
 docker compose -f docker-compose-<service-name>.yml up -d
 ```
@@ -137,7 +159,9 @@ Each service exposes its own ports:
 - Bitcoin Core ZMQ rawtx: 28333
 - Bitcoin Core ZMQ hashblock: 28334
 - Electrum Server: 50001
+- Electrs HTTP REST (esplora): 3000
 - Ordinals Server: 80
+- Mempool web: 8081
 - New Service: <port>
 
 ## Data Persistence
@@ -146,6 +170,7 @@ All services maintain data persistence in their respective directories:
 - Bitcoin Core data: `./bitcoin`
 - Electrum server data: `./electrs`
 - Ordinals server data: `./ordinals`
+- Mempool data: `./mempool` (`./mempool/data` for backend cache, `./mempool/mysql` for mariadb)
 - New Service data: `./<service-name>`
 
 ## Building from Source
@@ -155,7 +180,8 @@ Each service is built from source using their respective Dockerfiles. The build 
 1. Bitcoin Core: Built from source using CMake
 2. Electrum Server: Built from source using Cargo (Rust)
 3. Ordinals Server: Built from source using Cargo (Rust)
-4. New Service: <build process>
+4. Mempool: Built from source — API via Node.js + Rust (rust-gbt napi-rs addon), frontend via Angular, served by nginx
+5. New Service: <build process>
 
 ## Contributing
 
@@ -177,4 +203,5 @@ This project uses components with their respective licenses:
 - Bitcoin Core: MIT
 - Electrum Server: MIT
 - Ordinals: MIT
+- Mempool: AGPL-3.0
 - New Service: <license> 

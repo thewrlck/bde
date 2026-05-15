@@ -1,0 +1,45 @@
+FROM node:24.13-bookworm-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates git \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV CYPRESS_INSTALL_BINARY=0
+
+WORKDIR /src
+
+RUN git clone --depth 1 --branch v3.3.1 https://github.com/mempool/mempool.git .
+
+RUN cp ./docker/frontend/. ./frontend/ -r \
+ && cp ./nginx.conf ./frontend/ \
+ && cp ./nginx-mempool.conf ./frontend/ \
+ && sed -i'' -e 's/127.0.0.1:80/0.0.0.0:__MEMPOOL_FRONTEND_HTTP_PORT__/g' ./frontend/nginx.conf \
+ && sed -i'' -e 's/127.0.0.1/0.0.0.0/g' ./frontend/nginx.conf \
+ && sed -i'' -e 's/user nobody;//g' ./frontend/nginx.conf \
+ && sed -i'' -e 's!/etc/nginx/nginx-mempool.conf!/etc/nginx/conf.d/nginx-mempool.conf!g' ./frontend/nginx.conf \
+ && sed -i'' -e 's/127.0.0.1:8999/__MEMPOOL_BACKEND_MAINNET_HTTP_HOST__:__MEMPOOL_BACKEND_MAINNET_HTTP_PORT__/g' ./frontend/nginx-mempool.conf
+
+WORKDIR /src/frontend
+RUN npm install --omit=dev --omit=optional
+RUN npm run build
+
+FROM nginx:1.27.0-alpine
+
+RUN apk add --no-cache bash gettext
+
+RUN mkdir -p /patch /var/www/mempool \
+ && chown -R 1000:1000 /var/cache/nginx /var/log/nginx /etc/nginx /patch /var/www/mempool \
+ && touch /var/run/nginx.pid \
+ && chown 1000:1000 /var/run/nginx.pid
+
+COPY --from=builder --chown=1000:1000 /src/frontend/dist/mempool/browser /var/www/mempool
+COPY --from=builder --chown=1000:1000 /src/frontend/nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder --chown=1000:1000 /src/frontend/nginx-mempool.conf /etc/nginx/conf.d/nginx-mempool.conf
+COPY --from=builder --chown=1000:1000 /src/frontend/entrypoint.sh /patch/entrypoint.sh
+COPY --from=builder --chown=1000:1000 /src/frontend/wait-for /patch/wait-for
+RUN chmod +x /patch/entrypoint.sh /patch/wait-for
+
+USER 1000
+EXPOSE 8080
+ENTRYPOINT ["/patch/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

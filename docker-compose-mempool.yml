@@ -1,0 +1,95 @@
+services:
+  mempool-db:
+    image: mariadb:10.5.21
+    container_name: mempool-db
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MYSQL_DATABASE: mempool
+      MYSQL_USER: mempool
+      MYSQL_PASSWORD: ${MEMPOOL_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MEMPOOL_DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - ./mempool/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "mempool", "-p${MEMPOOL_DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mempool-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.mempool-backend
+    container_name: mempool-api
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      mempool-db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MEMPOOL_NETWORK: mainnet
+      MEMPOOL_BACKEND: esplora
+      ESPLORA_REST_API_URL: ${ESPLORA_REST_API_URL}
+      CORE_RPC_HOST: ${CORE_RPC_HOST}
+      CORE_RPC_PORT: ${CORE_RPC_PORT}
+      CORE_RPC_USERNAME: ${RPC_USER}
+      CORE_RPC_PASSWORD: ${RPC_PASS}
+      DATABASE_ENABLED: "true"
+      DATABASE_HOST: mempool-db
+      DATABASE_DATABASE: mempool
+      DATABASE_USERNAME: mempool
+      DATABASE_PASSWORD: ${MEMPOOL_DB_PASSWORD}
+      STATISTICS_ENABLED: "true"
+    volumes:
+      - ./mempool/data:/backend/cache
+    command:
+      [
+        "/backend/wait-for-it.sh",
+        "mempool-db:3306",
+        "--timeout=720",
+        "--strict",
+        "--",
+        "/backend/start.sh"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8999/api/v1/backend-info | grep -q . || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mempool-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.mempool-frontend
+    container_name: mempool-web
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - mempool-api
+    environment:
+      FRONTEND_HTTP_PORT: "8080"
+      BACKEND_MAINNET_HTTP_HOST: mempool-api
+      BACKEND_MAINNET_HTTP_PORT: "8999"
+    ports:
+      - ${MEMPOOL_WEB_PORT}:8080
+    command:
+      [
+        "/patch/wait-for",
+        "mempool-api:8999",
+        "--timeout=720",
+        "--",
+        "nginx",
+        "-g",
+        "daemon off;"
+      ]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/ | grep -q '<html' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

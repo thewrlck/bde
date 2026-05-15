@@ -6,3 +6,11 @@ electrs/*
 !electrs/.gitkeep
 ordinals/*
 !ordinals/.gitkeep
+mempool/*
+!mempool/.gitkeep
+!mempool/data
+!mempool/mysql
+mempool/data/*
+!mempool/data/.gitkeep
+mempool/mysql/*
+!mempool/mysql/.gitkeep
