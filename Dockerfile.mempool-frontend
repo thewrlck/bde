@@ -1,7 +1,7 @@
 FROM node:24.13-bookworm-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        ca-certificates git \
+        ca-certificates git rsync \
  && rm -rf /var/lib/apt/lists/*
 
 ENV CYPRESS_INSTALL_BINARY=0
